@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Create;
 
 use Exception;
-use App\Models\Post;
+use App\Models\Mahasiswa;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,101 +11,103 @@ use App\Http\Controllers\Controller;
 
 class BulkInsertController extends Controller
 {
-    public function bulkInsertWithEloquent(Request $request)
+    public function bulkInsertMahasiswaWithEloquent(Request $request)
     {
         try {
             $validatedData = $request->validate([
-                'posts' => 'required|array',
-                'posts.*.title' => 'required|max:255',
-                'posts.*.author_id' => 'required|exists:users,id',
-                'posts.*.body' => 'required|string',
+                'mahasiswa' => 'required|array',
+                'mahasiswa.*.nim' => 'required|unique:mahasiswa,nim|max:20',
+                'mahasiswa.*.nama' => 'required|max:100',
+                'mahasiswa.*.jurusan' => 'required|max:100',
+                'mahasiswa.*.angkatan' => 'required|integer',
+                'mahasiswa.*.status' => 'required|in:Aktif,Lulus,Cuti,Drop Out',
             ]);
 
-            Post::insert(array_map(function ($post) {
+            Mahasiswa::insert(array_map(function ($data) {
                 return [
-                    'title' => $post['title'],
-                    'author_id' => $post['author_id'],
-                    'slug' => Str::uuid7(),
-                    'body' => $post['body'],
+                    'nim' => $data['nim'],
+                    'nama' => $data['nama'],
+                    'jurusan' => $data['jurusan'],
+                    'angkatan' => $data['angkatan'],
+                    'status' => $data['status'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-            }, $validatedData['posts']));
+            }, $validatedData['mahasiswa']));
 
             return response()->json([
-                'message' => 'Posts created successfully with Eloquent',
-                'posts' => $validatedData['posts']
+                'message' => 'Mahasiswa created successfully with Eloquent',
+                'data' => $validatedData['mahasiswa']
             ], 201);
         } catch (Exception $e) {
             return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 
-    public function bulkInsertWithQueryBuilder(Request $request)
+    public function bulkInsertMahasiswaWithQueryBuilder(Request $request)
     {
         try {
             $validatedData = $request->validate([
-                'posts' => 'required|array',
-                'posts.*.title' => 'required|max:255',
-                'posts.*.author_id' => 'required|exists:users,id',
-                'posts.*.body' => 'required|string',
+                'mahasiswa' => 'required|array',
+                'mahasiswa.*.nim' => 'required|unique:mahasiswa,nim|max:20',
+                'mahasiswa.*.nama' => 'required|max:100',
+                'mahasiswa.*.jurusan' => 'required|max:100',
+                'mahasiswa.*.angkatan' => 'required|integer',
+                'mahasiswa.*.status' => 'required|in:Aktif,Lulus,Cuti,Drop Out',
             ]);
 
-            $insertData = array_map(function ($post) {
+            DB::table('mahasiswa')->insert(array_map(function ($data) {
                 return [
-                    'title' => $post['title'],
-                    'author_id' => $post['author_id'],
-                    'slug' => Str::uuid7(),
-                    'body' => $post['body'],
+                    'nim' => $data['nim'],
+                    'nama' => $data['nama'],
+                    'jurusan' => $data['jurusan'],
+                    'angkatan' => $data['angkatan'],
+                    'status' => $data['status'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-            }, $validatedData['posts']);
-
-            DB::table('posts')->insert($insertData);
+            }, $validatedData['mahasiswa']));
 
             return response()->json([
-                'message' => 'Posts created successfully with Query Builder',
-                'posts' => $validatedData['posts']
+                'message' => 'Mahasiswa created successfully with Query Builder',
+                'data' => $validatedData['mahasiswa']
             ], 201);
         } catch (Exception $e) {
             return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 
-    public function bulkInsertWithRawSQL(Request $request)
+    public function bulkInsertMahasiswaWithRawSQL(Request $request)
     {
         try {
-
             $validatedData = $request->validate([
-                'posts' => 'required|array',
-                'posts.*.title' => 'required|max:255',
-                'posts.*.author_id' => 'required|exists:users,id',
-                'posts.*.body' => 'required|string',
+                'mahasiswa' => 'required|array',
+                'mahasiswa.*.nim' => 'required|unique:mahasiswa,nim|max:20',
+                'mahasiswa.*.nama' => 'required|max:100',
+                'mahasiswa.*.jurusan' => 'required|max:100',
+                'mahasiswa.*.angkatan' => 'required|integer',
+                'mahasiswa.*.status' => 'required|in:Aktif,Lulus,Cuti,Drop Out',
             ]);
 
-            // Menyiapkan bagian query dan nilai
-            $query = "INSERT INTO posts (title, author_id, slug, body, created_at, updated_at) VALUES ";
+            $query = "INSERT INTO mahasiswa (nim, nama, jurusan, angkatan, status, created_at, updated_at) VALUES ";
             $values = [];
             $bindings = [];
 
-            foreach ($validatedData['posts'] as $post) {
-                $values[] = "(?, ?, ?, ?, NOW(), NOW())";
-                $bindings[] = $post['title'];
-                $bindings[] = $post['author_id'];
-                $bindings[] = Str::uuid7();
-                $bindings[] = $post['body'];
+            foreach ($validatedData['mahasiswa'] as $data) {
+                $values[] = "(?, ?, ?, ?, ?, NOW(), NOW())";
+                $bindings[] = $data['nim'];
+                $bindings[] = $data['nama'];
+                $bindings[] = $data['jurusan'];
+                $bindings[] = $data['angkatan'];
+                $bindings[] = $data['status'];
             }
 
-            // Menggabungkan query
             $query .= implode(", ", $values);
-
-            // Menjalankan query dengan bindings
             DB::statement($query, $bindings);
 
             return response()->json([
-                'message' => 'Posts created successfully with Raw SQL',
-                'posts' => $validatedData['posts']
+                'message' => 'Mahasiswa created successfully with Raw SQL',
+                'data' => $validatedData['mahasiswa']
             ], 201);
         } catch (Exception $e) {
             return response()->json(['errors' => $e->getMessage()], 422);

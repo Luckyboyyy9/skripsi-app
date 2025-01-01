@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Update;
 
+use Exception;
 use App\Models\Post;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -12,129 +14,82 @@ class BulkUpdateController extends Controller
     public function bulkUpdateWithEloquent(Request $request)
     {
         $validatedData = $request->validate([
-            'author_id' => 'required|exists:users,id', // Filter berdasarkan author_id
-            'title' => 'nullable|max:255',
-            'body' => 'nullable|string',
+            'angkatan' => 'required|integer', // Filter berdasarkan angkatan
+            'status' => 'required|in:Aktif,Lulus,Cuti,Drop Out', // Status baru
         ]);
 
-        // Cek apakah ada kolom yang ingin di-update
-        $updates = [];
-
-        if ($request->has('title')) {
-            $updates['title'] = $validatedData['title'];
-        }
-
-        if ($request->has('body')) {
-            $updates['body'] = $validatedData['body'];
-        }
-
-        if (!empty($updates)) {
-            // Update semua post berdasarkan author_id
-            $affectedRows = Post::where('author_id', $validatedData['author_id'])
-                ->update($updates);
+        try {
+            // Update semua mahasiswa berdasarkan angkatan
+            $affectedRows = Mahasiswa::where('angkatan', $validatedData['angkatan'])
+                ->update(['status' => $validatedData['status'], 'updated_at' => now()]);
 
             if ($affectedRows > 0) {
                 return response()->json([
-                    'message' => "$affectedRows posts updated successfully with Eloquent",
-                    'post' => $updates
+                    'message' => "$affectedRows mahasiswa updated successfully with Eloquent",
+                    'angkatan' => $validatedData['angkatan'],
+                    'status' => $validatedData['status']
                 ], 200);
             } else {
-                return response()->json(['message' => 'No posts were updated'], 404);
+                return response()->json(['message' => 'No mahasiswa were updated'], 404);
             }
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        return response()->json(['message' => 'No valid data to update'], 400);
     }
 
-    public function bulkUpdateWithQueryBuilder(Request $request)
+    public function bulkUpdateMahasiswaWithQueryBuilder(Request $request)
     {
         $validatedData = $request->validate([
-            'author_id' => 'required|exists:users,id', // Filter berdasarkan author_id
-            'title' => 'nullable|max:255',
-            'body' => 'nullable|string',
+            'angkatan' => 'required|integer', // Filter berdasarkan angkatan
+            'status' => 'required|in:Aktif,Lulus,Cuti,Drop Out'
         ]);
 
-        // Cek apakah ada kolom yang ingin di-update
-        $updates = [];
-
-        if ($request->has('title')) {
-            $updates['title'] = $validatedData['title'];
-        }
-
-        if ($request->has('body')) {
-            $updates['body'] = $validatedData['body'];
-        }
-
-        // Jika ada kolom yang ingin di-update
-        if (!empty($updates)) {
-            // Update semua post berdasarkan author_id
-            $affectedRows = DB::table('posts')
-                ->where('author_id', $validatedData['author_id'])
-                ->update($updates);
+        try {
+            // Update semua mahasiswa berdasarkan angkatan
+            $affectedRows = DB::table('mahasiswa')
+                ->where('angkatan', $validatedData['angkatan'])
+                ->update(['status' => $validatedData['status'], 'updated_at' => now()]);
 
             if ($affectedRows > 0) {
                 return response()->json([
-                    'message' => "$affectedRows posts updated successfully with Query Builder",
+                    'message' => "$affectedRows mahasiswa updated successfully with Query Builder",
+                    'angkatan' => $validatedData['angkatan'],
+                    'status' => $validatedData['status']
                 ], 200);
             } else {
-                return response()->json(['message' => 'No posts were updated'], 404);
+                return response()->json(['message' => 'No mahasiswa were updated'], 404);
             }
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
-        return response()->json(['message' => 'No valid data to update'], 400);
     }
 
-    public function bulkUpdateWithRawSQL(Request $request)
+    public function bulkUpdateMahasiswaWithRawSQL(Request $request)
     {
-        // Validasi data yang diterima dari request
         $validatedData = $request->validate([
-            'author_id' => 'required|exists:users,id', // Filter berdasarkan author_id
-            'title' => 'nullable|max:255', // Kolom yang ingin di-update
-            'body' => 'nullable|string',   // Kolom yang ingin di-update
+            'angkatan' => 'required|integer', // Filter berdasarkan angkatan
+            'status' => 'required|in:Aktif,Lulus,Cuti,Drop Out'
         ]);
 
-        // Cek apakah ada kolom yang ingin di-update
-        $updates = [];
-
-        if ($request->has('title')) {
-            $updates['title'] = $validatedData['title'];
-        }
-
-        if ($request->has('body')) {
-            $updates['body'] = $validatedData['body'];
-        }
-
-        if (!empty($updates)) {
+        try {
             // Buat query SQL untuk bulk update
-            $query = "UPDATE posts SET ";
-            $bindings = [];
-
-            // Tambahkan kolom yang di-update ke dalam query
-            if (!empty($updates['title'])) {
-                $query .= "title = ?, ";
-                $bindings[] = $updates['title'];
-            }
-
-            if (!empty($updates['body'])) {
-                $query .= "body = ?, ";
-                $bindings[] = $updates['body'];
-            }
-
-            // Tambahkan updated_at
-            $query .= "updated_at = NOW() WHERE author_id = ?";
-            $bindings[] = $validatedData['author_id'];
+            $query = "UPDATE mahasiswa SET status = ?, updated_at = NOW() WHERE angkatan = ?";
+            $bindings = [$validatedData['status'], $validatedData['angkatan']];
 
             // Jalankan query
             $affectedRows = DB::update($query, $bindings);
 
             if ($affectedRows > 0) {
                 return response()->json([
-                    'message' => "$affectedRows posts updated successfully with Raw SQL",
+                    'message' => "$affectedRows mahasiswa updated successfully with Raw SQL",
+                    'angkatan' => $validatedData['angkatan'],
+                    'status' => $validatedData['status']
                 ], 200);
             } else {
-                return response()->json(['message' => 'No posts were updated'], 404);
+                return response()->json(['message' => 'No mahasiswa were updated'], 404);
             }
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        return response()->json(['message' => 'No valid data to update'], 400);
     }
 }

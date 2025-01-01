@@ -2,147 +2,118 @@
 
 namespace App\Http\Controllers\Update;
 
-use id;
-use App\Models\Post;
+use Exception;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class SingleUpdateController extends Controller
 {
-    public function updateSingleWithEloquent(Request $request, $id)
+    public function updateMahasiswaWithEloquent(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'title' => 'nullable|max:255',
-            'slug' => 'nullable|string|unique:posts,slug,' . $id,
-            'body' => 'nullable|string',
+            'nama' => 'nullable|string|max:100',
+            'jurusan' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Aktif,Lulus,Cuti,Drop Out',
         ]);
 
         try {
-            // Menggunakan findOrFail, tetapi menangani exception
-            $post = Post::findOrFail($id);
+            // Menggunakan findOrFail untuk mendapatkan mahasiswa berdasarkan ID
+            $mahasiswa = Mahasiswa::findOrFail($id);
+
+            // Update hanya field yang ada di request
+            $mahasiswa->update($validatedData);
+
+            return response()->json([
+                'message' => 'Mahasiswa updated successfully with Eloquent',
+                'mahasiswa' => array_merge($validatedData, ['updated_at' => now()->toDateTimeString()])
+            ], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Post not found'], 404);
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        // Cek jika request mengirim 'title', update title
-        if ($request->has('title')) {
-            $post->title = $validatedData['title'];
-        }
-
-        // Cek jika request mengirim 'slug', update slug
-        if ($request->has('slug')) {
-            $post->slug = $validatedData['slug'];
-        }
-
-        // Cek jika request mengirim 'body', update body
-        if ($request->has('body')) {
-            $post->body = $validatedData['body'];
-        }
-
-        $post->save();
-
-        return response()->json([
-            'message' => 'Post updated successfully with Eloquent',
-            'post' => $post
-        ], 200);
     }
 
-    public function updateSingleWithQueryBuilder(Request $request, $id)
+    public function updateMahasiswaWithQueryBuilder(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'title' => 'nullable|max:255',
-            'slug' => 'nullable|string|unique:posts,slug,' . $id,
-            'body' => 'nullable|string',
+            'nama' => 'nullable|string|max:100',
+            'jurusan' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Aktif,Lulus,Cuti,Drop Out',
         ]);
 
-        // Cek apakah post ada di database
-        $post = DB::table('posts')->where('id', $id)->first();
+        try {
+            // Cek apakah mahasiswa ada di database
+            $mahasiswa = DB::table('mahasiswa')->where('id', $id)->first();
 
-        if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+            if (!$mahasiswa) {
+                return response()->json(['message' => 'Mahasiswa not found'], 404);
+            }
+
+            // Update hanya field yang ada di request
+            $updates = array_filter($validatedData);
+
+            if (!empty($updates)) {
+                $updates['updated_at'] = now();
+                DB::table('mahasiswa')->where('id', $id)->update($updates);
+            }
+
+            return response()->json([
+                'message' => 'Mahasiswa updated successfully with Query Builder',
+                'mahasiswa' => array_merge($validatedData, ['updated_at' => now()->toDateTimeString()])
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        $updates = [];
-
-        // Cek jika request mengirim 'title'
-        if ($request->has('title')) {
-            $updates['title'] = $validatedData['title'];
-        }
-
-        // Cek jika request mengirim 'slug'
-        if ($request->has('slug')) {
-            $updates['slug'] = $validatedData['slug'];
-        }
-
-        // Cek jika request mengirim 'body'
-        if ($request->has('body')) {
-            $updates['body'] = $validatedData['body'];
-        }
-
-        if (!empty($updates)) {
-            $updates['updated_at'] = now(); // Menambahkan nilai updated_at jika ada data yang di-update
-            DB::table('posts')
-                ->where('id', $id)
-                ->update($updates); // Menjalankan update jika ada data yang dikirim
-        }
-
-        return response()->json([
-            'message' => 'Post updated successfully with Query Builder',
-            'post' => $validatedData
-        ], 200);
     }
 
-    public function updateSingleWithRawSQL(Request $request, $id)
+    public function updateMahasiswaWithRawSQL(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'title' => 'nullable|max:255',
-            'slug' => 'nullable|string|unique:posts,slug,' . $id,
-            'body' => 'nullable|string',
+            'nama' => 'nullable|string|max:100',
+            'jurusan' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Aktif,Lulus,Cuti,Drop Out',
         ]);
 
-        // Cek apakah ada data yang di-update
-        $fields = [];
-        $bindings = [];
+        try {
+            // Cek apakah ada field yang akan di-update
+            $fields = [];
+            $bindings = [];
 
-        // Cek jika ada 'title' untuk di-update
-        if (!empty($validatedData['title'])) {
-            $fields[] = "title = ?";
-            $bindings[] = $validatedData['title'];
+            if (!empty($validatedData['nama'])) {
+                $fields[] = "nama = ?";
+                $bindings[] = $validatedData['nama'];
+            }
+
+            if (!empty($validatedData['jurusan'])) {
+                $fields[] = "jurusan = ?";
+                $bindings[] = $validatedData['jurusan'];
+            }
+
+            if (!empty($validatedData['status'])) {
+                $fields[] = "status = ?";
+                $bindings[] = $validatedData['status'];
+            }
+
+            if (empty($fields)) {
+                return response()->json(['message' => 'No fields to update'], 400);
+            }
+
+            $fields[] = "updated_at = NOW()";
+            $bindings[] = $id;
+
+            $sql = "UPDATE mahasiswa SET " . implode(", ", $fields) . " WHERE id = ?";
+
+            DB::statement($sql, $bindings);
+
+            return response()->json([
+                'message' => 'Mahasiswa updated successfully with Raw SQL',
+                'mahasiswa' => array_merge($validatedData, ['updated_at' => now()->toDateTimeString()])
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        // Cek jika ada 'slug' untuk di-update
-        if (!empty($validatedData['slug'])) {
-            $fields[] = "slug = ?";
-            $bindings[] = $validatedData['slug'];
-        }
-
-        // Cek jika ada 'body' untuk di-update
-        if (!empty($validatedData['body'])) {
-            $fields[] = "body = ?";
-            $bindings[] = $validatedData['body'];
-        }
-
-        // Jika tidak ada field yang diisi, kembalikan response error
-        if (empty($fields)) {
-            return response()->json(['message' => 'No fields to update'], 400);
-        }
-
-        // Tambahkan updated_at secara otomatis
-        $fields[] = "updated_at = NOW()";
-
-        // Tambahkan ID sebagai binding terakhir
-        $bindings[] = $id;
-
-        // Bangun query SQL dengan kolom yang akan di-update
-        $sql = "UPDATE posts SET " . implode(", ", $fields) . " WHERE id = ?";
-
-        // Jalankan query menggunakan DB::statement
-        DB::statement($sql, $bindings);
-
-        return response()->json([
-            'message' => 'Post updated successfully with Raw SQL',
-            'post' => $validatedData
-        ], 200);
     }
 }

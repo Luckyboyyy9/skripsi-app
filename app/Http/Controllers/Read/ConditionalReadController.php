@@ -2,108 +2,68 @@
 
 namespace App\Http\Controllers\Read;
 
-use App\Models\Post;
+use Exception;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class ConditionalReadController extends Controller
 {
-    public function getPostsByConditionWithEloquent(Request $request)
+    public function getMahasiswaByJurusanWithEloquent(Request $request)
     {
-        $validatedData = $request->validate([
-            'author_id' => 'nullable|exists:users,id',
-            'title' => 'nullable|string',
-            'slug' => 'nullable|string'
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'jurusan' => 'required|string|max:100',
+            ]);
 
-        $query = Post::query();
+            $mahasiswa = Mahasiswa::where('jurusan', $validatedData['jurusan'])->get();
 
-        if (!empty($validatedData['author_id'])) {
-            $query->where('author_id', $validatedData['author_id']);
+            if ($mahasiswa->isEmpty()) {
+                return response()->json(['message' => 'No mahasiswa found for the specified jurusan'], 404);
+            }
+
+            return response()->json($mahasiswa, 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        if (!empty($validatedData['title'])) {
-            $query->where('title', 'LIKE', '%' . $validatedData['title'] . '%');
-        }
-
-        if (!empty($validatedData['slug'])) {
-            $query->where('slug', 'LIKE', '%' . $validatedData['slug'] . '%');
-        }
-
-        $posts = $query->get();
-
-        if ($posts->isEmpty()) {
-            return response()->json(['message' => 'No posts found'], 404);
-        }
-
-        return response()->json($posts, 200);
     }
 
-    public function getPostsByConditionWithQueryBuilder(Request $request)
+    public function getMahasiswaByJurusanWithQueryBuilder(Request $request)
     {
-        $validatedData = $request->validate([
-            'author_id' => 'nullable|exists:users,id',
-            'title' => 'nullable|string',
-            'slug' => 'nullable|string'
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'jurusan' => 'required|string|max:100',
+            ]);
 
-        $query = DB::table('posts');
+            $mahasiswa = DB::table('mahasiswa')->where('jurusan', $validatedData['jurusan'])->get();
 
-        if (!empty($validatedData['author_id'])) {
-            $query->where('author_id', $validatedData['author_id']);
+            if ($mahasiswa->isEmpty()) {
+                return response()->json(['message' => 'No mahasiswa found for the specified jurusan'], 404);
+            }
+
+            return response()->json($mahasiswa, 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        if (!empty($validatedData['title'])) {
-            $query->where('title', 'LIKE', '%' . $validatedData['title'] . '%');
-        }
-
-        if (!empty($validatedData['slug'])) {
-            $query->where('slug', 'LIKE', '%' . $validatedData['slug'] . '%');
-        }
-
-        $posts = $query->get();
-
-        if ($posts->isEmpty()) {
-            return response()->json(['message' => 'No posts found'], 404);
-        }
-
-        return response()->json($posts, 200);
     }
 
-    public function getPostsByConditionWithRawSQL(Request $request)
+    public function getMahasiswaByJurusanWithRawSQL(Request $request)
     {
-        $validatedData = $request->validate([
-            'author_id' => 'nullable|exists:users,id',
-            'title' => 'nullable|string',
-            'slug' => 'nullable|string'
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'jurusan' => 'required|string|max:100',
+            ]);
 
-        $query = "SELECT * FROM posts WHERE 1=1";
+            $mahasiswa = DB::select('SELECT * FROM mahasiswa WHERE jurusan = ?', [$validatedData['jurusan']]);
 
-        $bindings = [];
+            if (empty($mahasiswa)) {
+                return response()->json(['message' => 'No mahasiswa found for the specified jurusan'], 404);
+            }
 
-        if (!empty($validatedData['author_id'])) {
-            $query .= " AND author_id = ?";
-            $bindings[] = $validatedData['author_id'];
+            return response()->json($mahasiswa, 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        if (!empty($validatedData['title'])) {
-            $query .= " AND title LIKE ?";
-            $bindings[] = '%' . $validatedData['title'] . '%';
-        }
-
-        if (!empty($validatedData['slug'])) {
-            $query .= " AND slug LIKE ?";
-            $bindings[] = '%' . $validatedData['slug'] . '%';
-        }
-
-        $posts = DB::select($query, $bindings);
-
-        if (empty($posts)) {
-            return response()->json(['message' => 'No posts found'], 404);
-        }
-
-        return response()->json($posts, 200);
     }
 }

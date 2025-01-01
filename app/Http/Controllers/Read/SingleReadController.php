@@ -2,35 +2,38 @@
 
 namespace App\Http\Controllers\Read;
 
-use App\Models\Post;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class SingleReadController extends Controller
 {
-    public function getSinglePostWithEloquent($id){
-        try{
-            $post = Post::findOrFail($id);
-            return response()->json($post, 200);
+    public function getSingleMahasiswaWithEloquent($id)
+    {
+        try {
+            $mahasiswa = Mahasiswa::findOrFail($id);
+            return response()->json($mahasiswa, 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Post not found'], 404);
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
         }
     }
 
-    public function getSinglePostWithQueryBuilder($id){
-        $post = DB::where('id', $id)->first();
-        if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+    public function getSingleMahasiswaWithQueryBuilder($id)
+    {
+        $mahasiswa = DB::table('mahasiswa')->where('id', $id)->first();
+        if (!$mahasiswa) {
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
         }
-        return response()->json($post, 200);
+        return response()->json($mahasiswa, 200);
     }
 
-    public function getSinglePostWithRawSQL($id){
-        $post = DB::select('SELECT * from users where id = ?', [$id]);
-        if (empty($post)) {
-            return response()->json(['message' => 'Post not found'], 404);
+    public function getSingleMahasiswaWithRawSQL($id)
+    {
+        $mahasiswa = DB::select('SELECT * FROM mahasiswa WHERE id = ?', [$id]);
+        if (empty($mahasiswa)) {
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
         }
-        return response()->json($post[0], 200);
+        return response()->json($mahasiswa[0], 200);
     }
 }

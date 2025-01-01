@@ -2,62 +2,75 @@
 
 namespace App\Http\Controllers\Delete;
 
-use App\Models\Post;
+use Exception;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class SingleDeleteController extends Controller
 {
-    public function deletePostWithEloquent($id)
+    public function deleteMahasiswaWithEloquent($id)
     {
-        // Cari post berdasarkan ID atau return 404 jika tidak ditemukan
-        $post = Post::find($id);
+        try {
+            // Cari mahasiswa berdasarkan ID
+            $mahasiswa = Mahasiswa::findOrFail($id);
 
-        if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+            // Hapus mahasiswa
+            $mahasiswa->delete();
+
+            return response()->json([
+                'message' => 'Mahasiswa deleted successfully with Eloquent',
+                'data' => $mahasiswa
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        // Hapus post yang ditemukan
-        $post->delete();
-
-        return response()->json([
-            'message' => 'Post deleted successfully',
-            'post' => $post  // Optional: Mengembalikan data post yang dihapus
-        ], 200);
     }
 
-
-    public function deleteSingleWithQueryBuilder($id)
+    public function deleteMahasiswaWithQueryBuilder($id)
     {
-        // Cari post berdasarkan ID menggunakan Query Builder
-        $post = DB::table('posts')->where('id', $id)->delete();
+        try {
+            // Ambil data mahasiswa sebelum dihapus
+            $mahasiswa = DB::table('mahasiswa')->where('id', $id)->first();
 
-        // Cek jika tidak ada post yang dihapus (post tidak ditemukan)
-        if (!$post) {
-            return response()->json(['message' => 'No posts found'], 404);  // Ubah dari 400 menjadi 404
+            if (!$mahasiswa) {
+                return response()->json(['message' => 'Mahasiswa not found'], 404);
+            }
+
+            // Hapus data mahasiswa
+            DB::table('mahasiswa')->where('id', $id)->delete();
+
+            return response()->json([
+                'message' => 'Mahasiswa deleted successfully with Query Builder',
+                'data' => $mahasiswa
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        return response()->json([
-            'message' => 'Post deleted successfully',
-            'deleted_count' => $post,  // Mengembalikan jumlah baris yang dihapus
-        ], 200);
     }
 
-
-    public function deleteSingleWithRawSQL($id)
+    public function deleteMahasiswaWithRawSQL($id)
     {
-        // Gunakan Raw SQL untuk menghapus post berdasarkan id
-        $deletedPost = DB::delete('DELETE FROM posts WHERE id = ?', [$id]);
+        try {
+            // Ambil data mahasiswa sebelum dihapus
+            $mahasiswa = DB::select('SELECT * FROM mahasiswa WHERE id = ?', [$id]);
 
-        // Cek jika tidak ada post yang dihapus (post tidak ditemukan)
-        if (!$deletedPost) {
-            return response()->json(['message' => 'No posts found'], 404);
+            if (empty($mahasiswa)) {
+                return response()->json(['message' => 'Mahasiswa not found'], 404);
+            }
+
+            // Hapus data mahasiswa
+            DB::delete('DELETE FROM mahasiswa WHERE id = ?', [$id]);
+
+            return response()->json([
+                'message' => 'Mahasiswa deleted successfully with Raw SQL',
+                'data' => $mahasiswa[0] // Ambil data pertama karena hasil SELECT adalah array
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
-
-        return response()->json([
-            'message' => 'Post deleted successfully with Raw SQL',
-            'deleted_count' => $deletedPost,  // Mengembalikan jumlah baris yang dihapus
-        ], 200);
     }
 }

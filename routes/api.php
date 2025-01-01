@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use function Laravel\Prompts\text;
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Create\KRSController;
 use App\Http\Controllers\Read\SingleReadController;
 use App\Http\Controllers\Create\BulkInsertController;
 use App\Http\Controllers\Update\BulkUpdateController;
@@ -21,16 +22,18 @@ Route::get('/user', function (Request $request) {
     return 'text';
 });
 
+Route::post('/krs/register', [KRSController::class, 'registerToCourse']);
+
 Route::prefix('single-insert')->group(function () {
-    Route::post('/eloquent', [SingleInsertController::class, 'insertWithEloquent'])->name('single.insert.eloquent');
-    Route::post('/query-builder', [SingleInsertController::class, 'insertWithQueryBuilder'])->name('single.insert.queryBuilder');
-    Route::post('/raw-sql', [SingleInsertController::class, 'insertWithRawSQL'])->name('single.insert.rawSQL');
+    Route::post('/eloquent', [SingleInsertController::class, 'insertSingleMahasiswaWithEloquent'])->name('single.insert.eloquent');
+    Route::post('/query-builder', [SingleInsertController::class, 'insertSingleMahasiswaWithQueryBuilder'])->name('single.insert.queryBuilder');
+    Route::post('/raw-sql', [SingleInsertController::class, 'insertSingleMahasiswaWithRawSQL'])->name('single.insert.rawSQL');
 });
 
 Route::prefix('bulk-insert')->group(function () {
-    Route::post('/eloquent', [BulkInsertController::class, 'bulkInsertWithEloquent'])->name('bulk.insert.eloquent');
-    Route::post('/query-builder', [BulkInsertController::class, 'bulkInsertWithQueryBuilder'])->name('bulk.insert.queryBuilder');
-    Route::post('/raw-sql', [BulkInsertController::class, 'bulkInsertWithRawSQL'])->name('bulk.insert.rawSQL');
+    Route::post('/eloquent', [BulkInsertController::class, 'bulkInsertMahasiswaWithEloquent'])->name('bulk.insert.eloquent');
+    Route::post('/query-builder', [BulkInsertController::class, 'bulkInsertMahasiswaWithQueryBuilder'])->name('bulk.insert.queryBuilder');
+    Route::post('/raw-sql', [BulkInsertController::class, 'bulkInsertMahasiswaWithRawSQL'])->name('bulk.insert.rawSQL');
 });
 
 Route::prefix('relational-insert')->group(function () {
@@ -40,33 +43,33 @@ Route::prefix('relational-insert')->group(function () {
 });
 
 Route::prefix('single-read')->group(function () {
-    Route::get('/eloquent/{id}', [SingleReadController::class, 'getSinglePostWithEloquent'])->name('single.read.eloquent');
-    Route::get('/query-builder/{id}', [SingleReadController::class, 'getSinglePostWithQueryBuilder'])->name('single.read.queryBuilder');
-    Route::get('/raw-sql/{id}', [SingleReadController::class, 'getSinglePostWithRawSQL'])->name('single.read.rawSQL');
+    Route::get('/eloquent/{id}', [SingleReadController::class, 'getSingleMahasiswaWithEloquent'])->name('single.read.eloquent');
+    Route::get('/query-builder/{id}', [SingleReadController::class, 'getSingleMahasiswaWithQueryBuilder'])->name('single.read.queryBuilder');
+    Route::get('/raw-sql/{id}', [SingleReadController::class, 'getSingleMahasiswaWithRawSQL'])->name('single.read.rawSQL');
 });
 
 Route::prefix('conditional-read')->group(function () {
-    Route::get('/eloquent', [ConditionalReadController::class, 'getPostsByConditionWithEloquent'])->name('conditional.read.eloquent');
-    Route::get('/query-builder', [ConditionalReadController::class, 'getPostsByConditionWithQueryBuilder'])->name('conditional.read.queryBuilder');
-    Route::get('/raw-sql', [ConditionalReadController::class, 'getPostsByConditionWithRawSQL'])->name('conditional.read.rawSQL');
+    Route::get('/eloquent', [ConditionalReadController::class, 'getMahasiswaByJurusanWithEloquent'])->name('conditional.read.eloquent');
+    Route::get('/query-builder', [ConditionalReadController::class, 'getMahasiswaByJurusanWithQueryBuilder'])->name('conditional.read.queryBuilder');
+    Route::get('/raw-sql', [ConditionalReadController::class, 'getMahasiswaByJurusanWithRawSQL'])->name('conditional.read.rawSQL');
 });
 
 Route::prefix('relational-read')->group(function () {
-    Route::get('/eloquent', [RelationalReadController::class, 'getRelationalDataWithEloquent'])->name('relational.read.eloquent');
-    Route::get('/query-builder', [RelationalReadController::class, 'getRelationalDataWithQueryBuilder'])->name('relational.read.queryBuilder');
-    Route::get('/raw-sql', [RelationalReadController::class, 'getRelationalDataWithRawSQL'])->name('relational.read.rawSQL');
+    Route::get('/eloquent/{id}', [RelationalReadController::class, 'getMataKuliahByMahasiswaWithEloquent'])->name('relational.read.eloquent');
+    Route::get('/query-builder/{id}', [RelationalReadController::class, 'getMataKuliahByMahasiswaWithQueryBuilder'])->name('relational.read.queryBuilder');
+    Route::get('/raw-sql/{id}', [RelationalReadController::class, 'getMataKuliahByMahasiswaWithRawSQL'])->name('relational.read.rawSQL');
 });
 
 Route::prefix('single-update')->group(function () {
-    Route::put('/eloquent/{id}', [SingleUpdateController::class, 'updateSingleWithEloquent'])->name('update.single.eloquent');
-    Route::put('/query-builder/{id}', [SingleUpdateController::class, 'updateSingleWithQueryBuilder'])->name('update.single.queryBuilder');
-    Route::put('/raw-sql/{id}', [SingleUpdateController::class, 'updateSingleWithRawSQL'])->name('update.single.rawSQL');
+    Route::put('/eloquent/{id}', [SingleUpdateController::class, 'updateMahasiswaWithEloquent'])->name('update.single.eloquent');
+    Route::put('/query-builder/{id}', [SingleUpdateController::class, 'updateMahasiswaWithQueryBuilder'])->name('update.single.queryBuilder');
+    Route::put('/raw-sql/{id}', [SingleUpdateController::class, 'updateMahasiswaWithRawSQL'])->name('update.single.rawSQL');
 });
 
 Route::prefix('bulk-update')->group(function () {
     Route::put('/eloquent', [BulkUpdateController::class, 'bulkUpdateWithEloquent'])->name('update.bulk.eloquent');
-    Route::put('/query-builder', [BulkUpdateController::class, 'bulkUpdateWithQueryBuilder'])->name('update.bulk.queryBuilder');
-    Route::put('/raw-sql', [BulkUpdateController::class, 'bulkUpdateWithRawSQL'])->name('update.bulk.rawSQL');
+    Route::put('/query-builder', [BulkUpdateController::class, 'bulkUpdateMahasiswaWithQueryBuilder'])->name('update.bulk.queryBuilder');
+    Route::put('/raw-sql', [BulkUpdateController::class, 'bulkUpdateMahasiswaWithRawSQL'])->name('update.bulk.rawSQL');
 });
 
 Route::prefix('relational-update')->group(function () {
@@ -76,9 +79,9 @@ Route::prefix('relational-update')->group(function () {
 });
 
 Route::prefix('single-delete')->group(function () {
-    Route::delete('/eloquent/{id}', [SingleDeleteController::class, 'deleteSingleWithEloquent'])->name('delete.single.eloquent');
-    Route::delete('/query-builder/{id}', [SingleDeleteController::class, 'deleteSingleWithQueryBuilder'])->name('delete.single.queryBuilder');
-    Route::delete('/raw-sql/{id}', [SingleDeleteController::class, 'deleteSingleWithRawSQL'])->name('delete.single.rawSQL');
+    Route::delete('/eloquent/{id}', [SingleDeleteController::class, 'deleteMahasiswaWithEloquent'])->name('delete.single.eloquent');
+    Route::delete('/query-builder/{id}', [SingleDeleteController::class, 'deleteMahasiswaWithQueryBuilder'])->name('delete.single.queryBuilder');
+    Route::delete('/raw-sql/{id}', [SingleDeleteController::class, 'deleteMahasiswaWithRawSQL'])->name('delete.single.rawSQL');
 });
 
 Route::prefix('conditional-delete')->group(function () {
