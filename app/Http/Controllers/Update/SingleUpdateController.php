@@ -78,7 +78,6 @@ class SingleUpdateController extends Controller
         ]);
 
         try {
-            // Cek apakah ada field yang akan di-update
             $fields = [];
             $bindings = [];
 
@@ -86,12 +85,10 @@ class SingleUpdateController extends Controller
                 $fields[] = "nama = ?";
                 $bindings[] = $validatedData['nama'];
             }
-
             if (!empty($validatedData['jurusan'])) {
                 $fields[] = "jurusan = ?";
                 $bindings[] = $validatedData['jurusan'];
             }
-
             if (!empty($validatedData['status'])) {
                 $fields[] = "status = ?";
                 $bindings[] = $validatedData['status'];
@@ -105,12 +102,14 @@ class SingleUpdateController extends Controller
             $bindings[] = $id;
 
             $sql = "UPDATE mahasiswa SET " . implode(", ", $fields) . " WHERE id = ?";
-
             DB::statement($sql, $bindings);
+
+            // Ambil kembali data mahasiswa setelah update
+            $updatedMahasiswa = DB::select("SELECT * FROM mahasiswa WHERE id = ?", [$id]);
 
             return response()->json([
                 'message' => 'Mahasiswa updated successfully with Raw SQL',
-                'mahasiswa' => array_merge($validatedData, ['updated_at' => now()->toDateTimeString()])
+                'mahasiswa' => $updatedMahasiswa[0] ?? null
             ], 200);
         } catch (Exception $e) {
             return response()->json(['errors' => $e->getMessage()], 422);
