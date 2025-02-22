@@ -94,10 +94,12 @@ class SingleUpdateController extends Controller
                 $bindings[] = $validatedData['status'];
             }
 
+            // **Tambahkan validasi jika tidak ada field yang dikirim**
             if (empty($fields)) {
                 return response()->json(['message' => 'No fields to update'], 400);
             }
 
+            // Tambahkan updated_at agar tetap ada field yang di-update
             $fields[] = "updated_at = NOW()";
             $bindings[] = $id;
 
@@ -109,7 +111,7 @@ class SingleUpdateController extends Controller
 
             return response()->json([
                 'message' => 'Mahasiswa updated successfully with Raw SQL',
-                'mahasiswa' => $updatedMahasiswa[0] ?? null
+                'mahasiswa' => array_merge($validatedData, ['updated_at' => now()->toDateTimeString()])
             ], 200);
         } catch (Exception $e) {
             return response()->json(['errors' => $e->getMessage()], 422);
