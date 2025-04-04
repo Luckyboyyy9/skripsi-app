@@ -15,9 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('id_mahasiswa');
             $table->unsignedBigInteger('id_mk');
-            $table->string('semester');
             $table->timestamps();
-    
+
             $table->foreign('id_mahasiswa')->references('id')->on('mahasiswa')->onDelete('cascade');
             $table->foreign('id_mk')->references('id')->on('mata_kuliah')->onDelete('cascade');
         });
